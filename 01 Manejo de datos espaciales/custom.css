@@ -1,0 +1,38 @@
+/* Cambia el color de fondo del marco de la tabla de contenido a gris */
+#TOC {
+    background-color: #D3D3D3; /* Color de fondo del marco */
+    padding: 10px; /* Ajusta el espacio interno si es necesario */
+    border-radius: 8px; /* Opcional: redondea las esquinas */
+  }
+  
+  /* Cambia el color de la selección en la tabla de contenido */
+  #TOC .active {
+    background-color: #F15A24; /* Color de fondo de la selección */
+    color: white !important; /* Cambia el texto seleccionado a blanco y fuerza el estilo */
+  }
+  
+  /* Cambia el color de los enlaces a blanco cuando están seleccionados */
+  #TOC .active a {
+    color: white !important; /* Cambia el color del enlace a blanco y fuerza el estilo */
+  }
+  
+  /* Cambia el color de los íconos a blanco cuando están seleccionados */
+  #TOC .active img {
+    filter: brightness(0) invert(1); /* Cambia el ícono a blanco */
+  }
+  
+  /* Configuración de la fuente Poppins */
+  @font-face {
+    font-family: 'Poppins';
+    src: url('Poppins/Poppins-Regular.ttf') format('truetype'),
+         url('Poppins/Poppins-Bold.ttf') format('truetype'),
+         url('Poppins/Poppins-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  /* Aplicar la fuente Poppins a todo el cuerpo del documento */
+  body {
+    font-family: 'Poppins', sans-serif;
+  }
+  

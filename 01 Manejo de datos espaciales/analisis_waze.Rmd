@@ -1,0 +1,798 @@
+---
+title: "<span style='color: #F15A24;'>Análisis de Datos de Waze para Planeación</span>"
+author: "David Arango Londoño"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    collapsed: true
+    smooth_scroll: true
+    theme: journal
+    highlight: kate
+    df_print: paged
+    code_folding: show
+    css: "custom.css"  # Incluye el archivo custom.css
+---
+
+
+## <span style='color: #F7931E;'>**Marco Teórico**</span>
+
+El análisis de datos de tráfico es esencial en el contexto urbano actual para mejorar la movilidad y la seguridad vial. Con el crecimiento constante de las ciudades y el aumento en el número de vehículos, es crucial utilizar herramientas y metodologías avanzadas para gestionar el tráfico de manera eficiente.
+
+Las aplicaciones de navegación colaborativa como **Waze** han revolucionado la recopilación de datos de tráfico. A través de la participación activa de los usuarios, Waze proporciona información en tiempo real sobre las condiciones de las vías, incluyendo reportes de congestión, accidentes, peligros y cierres de vías. Estos datos son valiosos para las autoridades y planificadores urbanos, ya que permiten tomar decisiones informadas basadas en información actual y precisa.
+
+El análisis de datos geoespaciales y la minería de datos son fundamentales para extraer conocimiento de grandes volúmenes de información. Herramientas como **R** y librerías especializadas como `leaflet`, `spatstat` y `ggplot2` facilitan el procesamiento y visualización de datos espaciales, permitiendo identificar patrones y tendencias que pueden guiar estrategias para mejorar la infraestructura vial y la gestión del tráfico.
+
+
+## <img src="iconos/introduccion.png" style="width:25px; vertical-align:middle;"> <span style='color: #F7931E;'>**Introducción**</span>
+
+
+El presente análisis se enfoca en el estudio de los eventos reportados por los usuarios a través de la aplicación Waze. Esta plataforma de navegación colaborativa proporciona datos valiosos sobre las condiciones del tráfico en tiempo real, incluyendo reportes de peligros, congestión, accidentes y cierres de vías. La información recopilada es esencial para la planificación urbana y la gestión eficiente del tráfico, permitiendo a las autoridades tomar decisiones informadas para mejorar la movilidad y la seguridad vial.
+
+
+## <span style='color: #F7931E;'>**Objetivo**</span>
+
+El objetivo de este análisis es estudiar la distribución espacial y temporal de los eventos reportados en Waze, centrándonos en un día específico (el día 26). Se evaluarán y visualizarán los eventos en un mapa interactivo, analizando patrones temporales y espaciales. El uso de herramientas de análisis espacial en R, como leaflet para la visualización geoespacial y spatstat para la densidad y distribución de puntos, permitirá crear mapas de calor que resalten las áreas con mayor incidencia de eventos. A lo largo del análisis se integrarán diversos gráficos y mapas que facilitarán la interpretación de los datos y contribuirán a mejorar la planificación y gestión del tráfico.
+
+
+## <span style='color: #F7931E;'>**Metodología CRISP-DM**</span>
+
+La metodología **CRISP-DM (Cross-Industry Standard Process for Data Mining)** es un estándar para la ejecución de proyectos de minería de datos. Esta metodología consta de seis fases que guían el proceso desde la comprensión del negocio hasta el despliegue de los resultados.
+
+### <span style='color: #FEA904;'>**Fases de CRISP-DM aplicadas al análisis**</span> 
+
+#### <span style='color: #FEA904;'>**1. Comprensión del Negocio**</span> 
+
+- **Objetivo**: Mejorar la movilidad y seguridad vial mediante el análisis de datos de Waze.
+- **Necesidad**: Identificar patrones de tráfico y áreas críticas para orientar acciones de gestión y planificación urbana.
+
+
+#### <span style='color: #FEA904;'>**2. Comprensión de los Datos**</span> 
+
+- **Recopilación de Datos**: Se obtienen los datos de eventos reportados en Waze el día 26.
+- **Exploración Inicial**: Se analiza la estructura de los datos, tipos de eventos, distribución temporal y espacial.
+
+#### <span style='color: #FEA904;'>**3. Preparación de los Datos**</span> 
+
+- **Limpieza**: Se manejan valores faltantes y se corrigen inconsistencias en los datos.
+- **Transformación**: Se convierten formatos de fecha y hora, y se ajustan las coordenadas geográficas.
+- **Enriquecimiento**: Se traducen las categorías de eventos al español para facilitar el análisis.
+
+#### <span style='color: #FEA904;'>**4. Modelado**</span> 
+
+- **Selección de Técnicas**: Se utilizan métodos de análisis espacial y visualización geográfica.
+- **Construcción del Modelo**: Se crean mapas interactivos y mapas de calor para visualizar los eventos.
+- **Evaluación del Modelo**: Se verifica que las visualizaciones representen adecuadamente los datos y permitan identificar patrones.
+
+#### <span style='color: #FEA904;'>**5. Evaluación**</span>
+
+- **Interpretación de Resultados**: Se analizan los mapas y gráficos para identificar áreas y horarios críticos.
+- **Validación**: Se contrastan los hallazgos con conocimiento previo o datos históricos, si están disponibles.
+- **Determinación de los Próximos Pasos**: Se establecen recomendaciones basadas en los resultados obtenidos.
+
+#### <span style='color: #FEA904;'>**6. Despliegue**</span>
+
+- **Presentación de Resultados**: Se documentan los hallazgos en un informe, incluyendo visualizaciones interactivas.
+- **Implementación**: Los resultados pueden ser utilizados por las autoridades para planificar intervenciones.
+- **Monitoreo**: Se sugiere un seguimiento continuo para actualizar el análisis con nuevos datos.
+
+## <img src="iconos/metodologia.png" style="width:25px; vertical-align:middle;"> <span style='color: #F7931E;'>**Metodología**</span>
+
+En este análisis se han seguido una serie de pasos metodológicos para garantizar un estudio estructurado y replicable de los eventos reportados por Waze el día 26. A continuación, se detallan las etapas clave del proceso:
+
+
+### <img src="iconos/obtencion_datos.png" style="width:25px; vertical-align:middle;"> <span style='color: #FEA904;'>**Obtención de Datos**</span>
+
+Los datos utilizados en este análisis fueron obtenidos a partir de la plataforma Waze, que permite la recopilación de eventos reportados por usuarios en tiempo real. Estos eventos incluyen peligros en las vías (`PELIGRO`), congestión (`CONGESTIÓN`), accidentes (`ACCIDENTE`), y cierres de vías (`VÍA CERRADA`). Los datos fueron proporcionados en un formato Excel, conteniendo información clave como la fecha de creación del evento, tipo de evento y coordenadas geográficas.
+
+
+
+### <span style='color: #FEA904;'>**Catálogo de Datos**</span> 
+
+El conjunto de datos proporcionado por Waze incluye las siguientes variables:
+
+- **creation_Date:** Fecha y hora en que se creó el reporte del evento.
+
+- **type:** Tipo de evento reportado, que puede ser uno de los siguientes:
+
+  - **PELIGRO:** Reportes de peligros en la vía, como objetos en la carretera, vehículos detenidos, etc.
+  
+  - **CONGESTIÓN:** Reportes de congestión o trancones en el tráfico.
+
+  - **ACCIDENTE:** Reportes de accidentes de tráfico.
+
+  - **VÍA CERRADA:** Reportes de cierres de vías.
+
+- **latitude:** Latitud geográfica donde ocurrió el evento.
+
+- **longitude:** Longitud geográfica donde ocurrió el evento.
+
+- **información_adicional:** Información adicional proporcionada por el usuario sobre el evento (si está disponible).
+
+- **otros_campos:** Otras variables relevantes incluidas en el conjunto de datos, como el identificador del evento, estado del evento, etc.
+
+Este catálogo de datos proporciona una descripción detallada de las variables que se utilizarán en el análisis, facilitando la comprensión y manipulación de la información.
+
+
+### <span style='color: #FEA904;'>**Carga y Preparación de los Datos**</span> 
+
+La primera etapa técnica consistió en la carga y limpieza de los datos. Utilizamos la librería `readxl` para cargar el archivo de Excel, y la librería `lubridate` para procesar y estandarizar los datos temporales. Los datos geográficos, como latitud y longitud, se ajustaron para garantizar su correcta visualización en mapas.
+
+Además, se transformaron las fechas al formato adecuado (`YYYY-MM-DD HH:MM`) para asegurar que las operaciones de filtrado temporal fueran precisas.
+
+### <span style='color: #FEA904;'>**Análisis Descriptivo y Exploratorio**</span> 
+Una vez los datos estuvieron cargados y preparados, se realizó un análisis descriptivo inicial para entender las características básicas de los eventos. Se calculó la frecuencia de los diferentes tipos de eventos reportados, permitiendo identificar qué eventos eran más comunes.
+
+Se generaron gráficos de barras utilizando `ggplot2` para visualizar la distribución de los eventos y su prevalencia en la muestra de datos. Esta etapa ayudó a identificar patrones generales antes de pasar al análisis geoespacial.
+
+### <span style='color: #FEA904;'>**Filtrado y Análisis Temporal**</span> 
+
+Posteriormente, se filtraron los eventos según la fecha de interés (el día 26). El análisis temporal se enfocó en estudiar la concentración de eventos en distintas franjas horarias del día, permitiendo identificar momentos críticos, como las horas pico de congestión.
+
+Utilizando `lubridate`, se extrajeron las horas y días de los eventos, lo que facilitó el análisis de patrones temporales y el filtrado de eventos en fechas específicas.
+
+### <span style='color: #FEA904;'>**Análisis Geoespacial y Visualización**</span> 
+El análisis geoespacial se centró en la visualización de los eventos filtrados sobre un mapa utilizando la librería `leaflet`. Se generaron mapas interactivos para mostrar la distribución de los eventos reportados, tales como peligros, accidentes, cierres de vías y congestión.
+
+Adicionalmente, se crearon mapas de densidad utilizando las herramientas `spatstat` y `terra` para estudiar las concentraciones geográficas de estos eventos, resaltando las áreas más afectadas en la ciudad.
+
+### <span style='color: #FEA904;'>**Mapas de Calor y Densidad**</span> 
+Una de las etapas más importantes del análisis fue la creación de mapas de calor que permitieron identificar las zonas más críticas en términos de peligros, accidentes y congestión. Estos mapas fueron generados a partir de patrones de puntos espaciales utilizando funciones de estimación de densidad. Esto permitió resaltar visualmente las áreas con mayor incidencia de eventos, proporcionando una herramienta clave para la toma de decisiones.
+
+### <span style='color: #FEA904;'>**Consolidación de Resultados**</span> 
+Finalmente, se consolidaron los resultados de los análisis en un conjunto de mapas interactivos que integran los diferentes tipos de eventos. La consolidación de estos resultados facilita la comparación y análisis conjunto de los eventos, proporcionando una visión integral de los problemas de tráfico en la ciudad.
+
+### <span style='color: #FEA904;'>**Interpretación y Conclusiones**</span> 
+Tras la consolidación de los resultados, se interpretaron los hallazgos clave, identificando las zonas de mayor riesgo y los patrones críticos de congestión y accidentes. Esta información fue utilizada para formular recomendaciones prácticas que ayuden a mitigar los problemas detectados y mejorar la movilidad urbana.
+
+La metodología empleada permitió llevar a cabo un análisis detallado y replicable, brindando una base sólida para futuras investigaciones en la gestión del tráfico y la seguridad vial.
+
+
+## <span style='color: #F7931E;'>**Carga de Datos y de Librerías Necesarias**</span>
+
+
+En esta sección se realiza la carga y preparación de los datos obtenidos desde Waze, además de las librerías que se van a usar a lo largo del documento. Los datos se encuentran almacenados en un archivo Excel y se procesan las fechas de creación de cada evento para asegurarnos de que están en el formato adecuado para realizar análisis temporal.
+
+El archivo Excel incluye información clave como el tipo de evento, las coordenadas geográficas, y la fecha de creación del evento. Para el análisis es necesario convertir las fechas al formato adecuado (`YYYY-MM-DD HH:MM`), ya que esto permitirá realizar un análisis temporal preciso y ordenado.
+
+
+```{r setup, message=FALSE, warning=FALSE}
+library(readxl)            # readxl: Para la carga de datos desde archivos Excel.
+library(dplyr)             # dplyr: Para la manipulación y transformación de datos.
+library(lubridate)         # lubridate: Para el manejo y procesamiento de fechas y tiempos.
+library(leaflet)           # leaflet: Para la creación de mapas interactivos.
+library(sf)                # sf: Para trabajar con datos geoespaciales.
+library(mapview)           # mapview: Para la visualización interactiva de mapas.
+library(spatstat)          # spatstat: Para el análisis de patrones espaciales y análisis de densidad.
+library(terra)             # terra: Para el manejo de datos raster y análisis espacial.
+library(leaflet.extras)    # leaflet.extras: Para añadir funciones adicionales a los mapas de leaflet
+library(ggplot2)           # ggplot2: Para la creación de gráficos y visualizaciones.
+library(leafsync)          # leafsync: Para la sincronización de múltiples mapas interactivos.
+```
+
+
+```{r load-data, warning=FALSE}
+# Cargar los datos de Waze
+Trama_Waze = read_excel("~/Desktop//Trama Waze.xlsx")
+
+# Convertir la columna de fechas a formato adecuado
+Trama_Waze$fecha = as.Date(Trama_Waze$creation_Date, format ="%Y-%m-%d %H:%M")
+
+# Cambiar los nombres de los tipos de eventos a español
+Trama_Waze$tipo_evento <- recode(Trama_Waze$type,
+                                 "ACCIDENT" = "ACCIDENTE",
+                                 "HAZARD" = "PELIGRO",
+                                 "JAM" = "CONGESTIÓN",
+                                 "ROAD_CLOSED" = "VÍA CERRADA")
+
+```
+
+
+
+## <span style='color: #F7931E;'>**Análisis Temporal de los Eventos**</span>
+
+El análisis temporal es una de las primeras aproximaciones que se realiza en los datos, permitiendo identificar patrones en la distribución de eventos a lo largo del día. En esta sección, se extraen las horas y los días a partir de los datos originales utilizando la librería `lubridate`. Esto facilita el filtrado de eventos en fechas y horas específicas.
+
+El objetivo es analizar si existen concentraciones de eventos en ciertas franjas horarias y cómo estos se distribuyen a lo largo del día 26, lo que podría revelar horas pico de congestión o momentos críticos con mayor cantidad de accidentes.
+
+
+```{r}
+# Cargar la librería lubridate
+library(lubridate)
+
+# Convertir la fecha y extraer la hora y el día
+fecha_hora = ymd_hms(Trama_Waze$creation_Date)
+hora = hour(fecha_hora)
+dia = day(fecha_hora)
+
+hora_factorizado <- factor(hora, levels = 0:23)
+
+g_hora=ggplot(mapping = aes(x = hora_factorizado)) +
+  geom_bar(fill = "orange", color = "black") +
+  labs(
+    title = "Frecuencia de Eventos por Hora del Día",
+    x = "Hora del Día",
+    y = "Frecuencia (Conteo)"
+  ) +
+  theme_minimal() +
+  scale_x_discrete(drop = FALSE)
+
+g_hora
+
+
+# Agregar la columna de hora a los datos
+Trama_Waze$hora = hora
+
+# Mostrar la tabla de frecuencia de tipos de eventos
+table(Trama_Waze$tipo_evento)
+
+```
+
+
+
+
+
+## <span style='color: #F7931E;'>**Distribución de Eventos**</span>
+
+En esta sección se presenta un análisis descriptivo de los tipos de eventos registrados en los datos de Waze. Se genera una visualización en forma de gráfico de barras que muestra la frecuencia de los diferentes tipos de eventos, como trancones, peligros, accidentes, y cierres de vías.
+
+Este análisis es clave para identificar qué eventos son más frecuentes y cuáles requieren mayor atención. Además, proporciona una visión general de las categorías más comunes de eventos reportados por los usuarios y puede influir en la priorización de recursos para la gestión del tráfico.
+
+
+```{r}
+# Calcular la frecuencia de cada tipo de evento en Trama_Waze
+frecuencia_eventos <- Trama_Waze %>%
+  group_by(tipo_evento) %>%                 # Agrupar por tipo de evento
+  summarise(Frecuencia = n()) %>%     # Contar la frecuencia de cada tipo
+  arrange(desc(Frecuencia))           # Ordenar por frecuencia descendente
+
+# Crear un gráfico de barras con ggplot2 usando los datos de Trama_Waze
+ggplot(frecuencia_eventos, aes(x = tipo_evento, y = Frecuencia, fill = tipo_evento)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Distribución de Tipos de Eventos en Trama Waze", 
+       x = "Tipo de Evento", y = "Frecuencia") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotar etiquetas para mejor visualización
+  scale_fill_brewer(palette = "Set2")  # Utilizar una paleta de colores predefinida
+```
+
+
+
+
+
+## <span style='color: #F7931E;'>**Filtrado de Eventos PELIGRO del Día 26**</span>
+
+En este apartado, se filtran los eventos de tipo `PELIGRO` que ocurrieron específicamente el día 26. El propósito es reducir el volumen de datos y centrarse en los eventos de riesgo, lo que permite un análisis más profundo y detallado de estos incidentes.
+
+Este filtrado es esencial para poder focalizar el análisis en los eventos que realmente presentan peligros potenciales en las vías, facilitando así la identificación de las áreas más críticas.
+
+
+```{r}
+# Identificar eventos PELIGRO del día 26
+pos <- which(Trama_Waze$tipo_evento == "PELIGRO" & dia == 26)
+peligro26 <- Trama_Waze[pos,]
+
+```
+
+
+## <span style='color: #F7931E;'>**Visualización de Eventos PELIGRO**</span>
+
+
+Una vez filtrados los eventos `PELIGRO`, se procede a visualizarlos en un mapa interactivo utilizando la librería `leaflet`. Este mapa permite explorar las ubicaciones exactas de los peligros reportados, representando los eventos sobre un mapa geográfico y agrupándolos en clusters para mejorar la legibilidad.
+
+Los usuarios pueden interactuar con el mapa, lo que facilita la identificación visual de los puntos con mayor concentración de eventos y ayuda a identificar patrones espaciales en la distribución de peligros.
+
+```{r}
+# Cargar librerías necesarias para visualización
+library(mapview)
+library(leaflet)
+
+# Ajustar las coordenadas de latitud y longitud
+peligro26$lat <- peligro26$location_y / 10^(nchar(peligro26$location_y) - 1)
+peligro26$long <- peligro26$location_x / 10^(nchar(peligro26$location_x) - 3)
+
+# Filtrar eventos dentro del rango geográfico adecuado
+peligro26 <- peligro26[peligro26$lat > 4 & peligro26$lat < 5,]
+
+# Crear un mapa interactivo con leaflet
+m26_peligro <- leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(lng = peligro26$long, lat = peligro26$lat,
+                   clusterOptions = markerClusterOptions(),
+                   label = peligro26$hora) %>%
+  addControl(html = "<h3>Mapa de Riesgos</h3>", position = "topleft")
+
+# Mostrar el mapa
+m26_peligro
+
+```
+
+
+
+
+## <span style='color: #F7931E;'>**Análisis Espacial de la Distribución de Riesgos**</span>
+
+En esta sección, se realiza un análisis espacial de los eventos `PELIGRO` del día 26 utilizando herramientas avanzadas como `spatstat` y `terra`. El objetivo es estudiar la distribución geográfica de los eventos de riesgo y generar mapas de calor que destaquen las áreas más afectadas.
+
+Este tipo de análisis espacial es crucial para identificar patrones de concentración de eventos y zonas de alto riesgo, lo que puede ser útil para la toma de decisiones en la gestión de tráfico y la planificación urbana.
+
+
+```{r}
+# Cargar las librerías necesarias
+library(leaflet)
+library(dplyr)
+library(leaflet.extras)
+
+# Filtrar datos relevantes de peligro26
+peligro26 <- peligro26 %>%
+  filter(lat > 4 & lat < 5, long > -75 & long < -73)  # Ajustar las coordenadas de interés
+
+# Crear un mapa interactivo con leaflet y addHeatmap
+leaflet(peligro26) %>%
+  addProviderTiles("OpenStreetMap") %>%  # Añadir la capa base del mapa
+  addHeatmap(
+    lng = ~long, lat = ~lat,               # Especificar las columnas de longitud y latitud
+    intensity = ~hora,                     # Intensidad opcional basada en la hora (o cualquier otra variable)
+    blur = 20,                             # Nivel de desenfoque del mapa de calor
+    max = 0.08,                            # Ajustar el valor máximo para la intensidad
+    radius = 15                            # Radio de cada punto en el mapa de calor
+  ) %>%
+  addLegend("bottomright",                 # Añadir leyenda
+            title = "Mapa de Calor de Riesgos",
+            colors = c("blue", "green", "yellow", "red"),
+            labels = c("Bajo", "Moderado", "Alto", "Muy Alto"))
+
+
+```
+
+
+
+
+## <span style='color: #F7931E;'>**Mapa de Densidad de Cierres de Vías**</span>
+En esta sección se genera un mapa de densidad basado en la distribución espacial de los eventos de cierre de vías (`VIA CERRADA`) reportados el día 26. El objetivo de este análisis es identificar las zonas más afectadas por los cierres de vías, lo que puede ayudar en la planificación de desvíos y la optimización de la movilidad urbana.
+
+El mapa de densidad resalta las áreas con mayor número de cierres de vías, proporcionando una visualización clara de las zonas de mayor impacto. Esta información es crucial para que las autoridades tomen decisiones informadas sobre cómo gestionar el tráfico en estas áreas.
+
+
+```{r road-close-filter}
+# Filtrar eventos VÍA CERRADA del día 26
+pos <- which(Trama_Waze$tipo_evento == "VÍA CERRADA" & dia == 26)
+via_cerrada_26 <- Trama_Waze[pos,]
+
+# Ajustar las coordenadas de latitud y longitud
+via_cerrada_26$lat <- via_cerrada_26$location_y / 10^(nchar(via_cerrada_26$location_y) - 1)
+via_cerrada_26$long <- via_cerrada_26$location_x / 10^(nchar(via_cerrada_26$location_x) - 3)
+
+# Filtrar eventos dentro del rango geográfico adecuado
+via_cerrada_26 <- via_cerrada_26[via_cerrada_26$lat > 4 & via_cerrada_26$lat < 5,]
+```
+
+
+
+
+## <span style='color: #F7931E;'>**Mapa Interactivo de Cierres de Vías**</span>
+En esta sección se presenta un mapa interactivo que muestra los eventos de cierre de vías (`VIA CERRADA`) del día 26. Utilizando la herramienta `leaflet`, se visualizan las ubicaciones de estos eventos en un mapa, donde los usuarios pueden hacer clic en cada marcador para obtener más información sobre el evento, como la hora y las coordenadas exactas.
+
+Este mapa interactivo permite explorar geográficamente las áreas afectadas por los cierres de vías, proporcionando una herramienta visual poderosa para la planificación y gestión del tráfico en la ciudad.
+
+```{r}
+# Cargar librería leaflet
+require(leaflet)
+
+# Crear el mapa interactivo
+m26_via_cerrada = leaflet(via_cerrada_26) %>%
+  addTiles() %>%
+  addCircleMarkers(lng = ~long, lat = ~lat,
+                   clusterOptions = markerClusterOptions(),
+                   label = ~hora) %>%
+  addControl(html = "<h3>Mapa de Cierre de Vías<h3>", position = "topleft")
+
+# Mostrar el mapa interactivo
+m26_via_cerrada
+
+
+
+
+```
+
+
+## <span style='color: #F7931E;'>**Análisis Espacial de Cierres de Vías**</span>
+
+Esta sección está dedicada al análisis espacial de los cierres de vías utilizando herramientas como `spatstat` y `terra`. El objetivo es estudiar cómo están distribuidos geográficamente los eventos de cierre de vías reportados el día 26 y analizar si existen patrones en la concentración de estos eventos.
+
+Este tipo de análisis ayuda a entender la extensión geográfica de los cierres de vías, lo que puede ser útil para identificar áreas críticas que podrían necesitar intervenciones inmediatas o planificación a largo plazo.
+
+
+```{r, warning=FALSE}
+# Cargar las librerías necesarias
+library(spatstat)
+
+# Definir la zona de interés
+zona <- owin(xrange = c(-74.04331, -73.9929), yrange = c(4.885736, 4.948562))
+
+# Crear un patrón de puntos espaciales a partir de los eventos VÍA CERRADA
+patron_via_cerrada <- ppp(x = via_cerrada_26$long, y = via_cerrada_26$lat, window = zona)
+
+# Graficar el test de cuadrantes
+plot(quadratcount(patron_via_cerrada), main = "Patrón de Puntos y Test de Cuadrantes")
+
+# Superponer los puntos sobre los cuadrantes
+points(patron_via_cerrada, col = "red")
+
+# Gráfico independiente: Función K-Estimación
+plot(Kest(patron_via_cerrada), main = "Función K-Estimación")
+
+
+```
+
+
+## <span style='color: #F7931E;'>**Mapa de Densidad de Cierres de Vías**</span>
+Aquí se genera un segundo mapa de densidad basado en los eventos de cierre de vías (`VÍA CERRADA`), pero con un enfoque más detallado en las áreas de mayor afectación. Este mapa destaca las zonas con la mayor cantidad de eventos de cierre de vías, permitiendo identificar áreas donde los cierres de vías son más frecuentes.
+
+
+El uso de este mapa es clave para comprender la severidad de los cierres de vías en ciertas áreas de la ciudad y cómo pueden afectar la movilidad en general.
+
+
+
+```{r, warning=FALSE}
+# Cargar las librerías necesarias
+library(terra)
+library(leaflet)
+library(spatstat)
+
+# Asegurarse de que el objeto patron_via_cerrada esté correctamente definido
+# Crear un patrón de puntos espaciales utilizando los datos correctos (via_cerrada_26)
+zona <- owin(xrange = c(-74.04331, -73.9929), yrange = c(4.885736, 4.948562))
+patron_via_cerrada <- ppp(x = via_cerrada_26$long, y = via_cerrada_26$lat, window = zona)
+
+# Calcular la densidad espacial
+im1 <- density(patron_via_cerrada, sigma = 0.01)  # Ajusta sigma según sea necesario
+
+# Convertir la densidad a un objeto raster usando terra
+mapa_via_cerrada <- rast(im1)
+
+# Convertir el raster a data.frame para leaflet
+df_via_cerrada <- as.data.frame(mapa_via_cerrada, xy = TRUE)
+colnames(df_via_cerrada) <- c("long", "lat", "intensity")
+
+# Normalizar los valores de intensidad entre 0 y 1
+df_via_cerrada$intensity <- (df_via_cerrada$intensity - min(df_via_cerrada$intensity)) / 
+                            (max(df_via_cerrada$intensity) - min(df_via_cerrada$intensity))
+
+# Crear un mapa interactivo usando leaflet
+leaflet(df_via_cerrada) %>%
+  addProviderTiles("OpenStreetMap") %>%  # Añadir la capa base
+  addHeatmap(
+    lng = ~long, lat = ~lat,              # Coordenadas de longitud y latitud
+    intensity = ~intensity,               # Intensidad normalizada
+    blur = 20,                            # Nivel de desenfoque
+    max = 1,                              # Valor máximo de la intensidad normalizada
+    radius = 15                           # Radio para reflejar la densidad
+  ) %>%
+  addLegend("bottomright",                # Añadir la leyenda
+            title = "Mapa de Calor de Cierres de Vías",
+            colors = c("blue", "green", "yellow", "red"),
+            labels = c("Bajo", "Moderado", "Alto", "Muy Alto"))
+
+
+```
+
+
+
+
+## <span style='color: #F7931E;'>**Análisis de Accidentes**</span>
+En esta sección se realiza un análisis detallado de los eventos de accidentes (`ACCIDENTE`) ocurridos el día 26. Se filtran estos eventos para enfocarse exclusivamente en los accidentes reportados en esa fecha, con el objetivo de entender mejor su distribución espacial y su impacto en la movilidad.
+
+El análisis de accidentes es crucial para identificar áreas peligrosas y planificar medidas de seguridad vial, como la instalación de señalización adicional o la mejora de la infraestructura vial en zonas críticas.
+
+
+
+```{r}
+# Filtrar eventos de accidentes del día 26
+pos <- which(Trama_Waze$tipo_evento == "ACCIDENTE" & dia == 26)
+accidente_26 <- Trama_Waze[pos,]
+
+# Ajustar las coordenadas de latitud y longitud
+accidente_26$lat <- accidente_26$location_y / 10^(nchar(accidente_26$location_y) - 1)
+accidente_26$long <- accidente_26$location_x / 10^(nchar(accidente_26$location_x) - 3)
+
+# Filtrar eventos dentro del rango geográfico adecuado
+accidente_26 <- accidente_26[accidente_26$lat > 4 & accidente_26$lat < 5,]
+
+
+```
+
+
+
+## <span style='color: #F7931E;'>**Mapa Interactivo de Accidentes**</span>
+
+quí se presenta un mapa interactivo que muestra los eventos de accidentes (`ACCIDENTE`) del día 26. Al igual que en los mapas anteriores, se utiliza `leaflet` para visualizar los puntos donde ocurrieron accidentes, permitiendo a los usuarios hacer clic en los marcadores para obtener más detalles sobre cada incidente.
+
+El mapa interactivo proporciona una herramienta visual para entender la distribución espacial de los accidentes, facilitando la identificación de zonas donde se concentran más incidentes y donde podrían implementarse mejoras para la seguridad vial.
+
+```{r}
+# Cargar librerías necesarias
+library(leaflet)
+
+# Crear el mapa interactivo
+m26_accidente <- leaflet(accidente_26) %>%
+  addTiles() %>%
+  addCircleMarkers(lng = ~long, lat = ~lat,
+                   clusterOptions = markerClusterOptions(),
+                   label = ~hora) %>%
+  addControl(html = "<h3>Mapa de Accidentes</h3>", position = "topleft")
+
+# Mostrar el mapa interactivo
+m26_accidente
+
+
+```
+
+
+## <span style='color: #F7931E;'>**Análisis Espacial de Accidentes**</span>
+En esta sección se realiza un análisis espacial de los accidentes ocurridos el día 26 utilizando las herramientas `spatstat` y `terra`. El objetivo es estudiar cómo se distribuyen geográficamente los accidentes y si hay patrones espaciales en su ocurrencia.
+
+Este análisis es importante para identificar áreas donde los accidentes son más frecuentes y así planificar estrategias de mitigación, como mejorar la señalización o realizar cambios en la infraestructura para reducir la probabilidad de accidentes en esas zonas.
+
+```{r, warning=FALSE}
+# Cargar las librerías necesarias
+require(spatstat)
+
+# Definir la zona de interés
+zona = owin(xrange = c(-74.04331, -73.9929), yrange = c(4.885736, 4.948562))
+
+# Crear un patrón de puntos espaciales a partir de los eventos ACCIDENTE
+patron_accidente = ppp(x = accidente_26$long, y = accidente_26$lat, window = zona)
+
+# Gráfico combinado: Test de Cuadrantes y Patrón de Puntos
+par(mfrow = c(1, 1))  # Asegurarse de que solo haya una gráfica
+
+# Graficar el test de cuadrantes
+plot(quadratcount(patron_accidente), main = "Patrón de Puntos y Test de Cuadrantes")
+
+# Superponer los puntos sobre los cuadrantes
+points(patron_accidente, col = "red" )
+
+
+# Calcular la función K-estimación
+plot(Kest(patron_accidente))
+
+```
+
+
+
+
+## <span style='color: #F7931E;'>**Mapa de Densidad de Accidentes**</span>
+En esta sección, se genera un mapa de densidad basado en la distribución de los accidentes (`ACCIDENTE`) ocurridos el día 26. Este mapa resalta las áreas con mayor concentración de accidentes, lo que puede ayudar a identificar zonas de alto riesgo en la ciudad.
+
+El uso de mapas de densidad en el análisis de accidentes es crucial para visualizar las áreas más afectadas y planificar intervenciones que mejoren la seguridad vial. Este tipo de visualización permite observar patrones espaciales que pueden no ser evidentes a través de simples tablas de datos.
+
+
+
+```{r, warning=FALSE}
+# Cargar las librerías necesarias
+library(terra)
+library(leaflet)
+library(spatstat)
+
+# Asegurarse de que el objeto patron_accidente esté correctamente definido
+# Usar las coordenadas correctas de los accidentes
+zona <- owin(xrange = c(-74.04331, -73.9929), yrange = c(4.885736, 4.948562))
+patron_accidente <- ppp(x = accidente_26$long, y = accidente_26$lat, window = zona)
+
+# Calcular la densidad espacial
+im1 <- density(patron_accidente)
+
+# Convertir la densidad a un objeto raster usando terra
+mapa_accidente <- rast(im1)
+
+# Convertir el raster a data.frame para leaflet
+df_accidente <- as.data.frame(mapa_accidente, xy = TRUE)
+colnames(df_accidente) <- c("long", "lat", "intensity")
+
+# Normalizar los valores de intensidad entre 0 y 1
+df_accidente$intensity <- (df_accidente$intensity - min(df_accidente$intensity)) / 
+                          (max(df_accidente$intensity) - min(df_accidente$intensity))
+
+# Crear un mapa interactivo usando leaflet
+leaflet(df_accidente) %>%
+  addProviderTiles("OpenStreetMap") %>%  # Añadir la capa base
+  addHeatmap(
+    lng = ~long, lat = ~lat,              # Coordenadas de longitud y latitud
+    intensity = ~intensity,               # Intensidad normalizada
+    blur = 15,                            # Nivel de desenfoque
+    max = 0.5,                              # Valor máximo de la intensidad normalizada
+    radius = 10                           # Ajustar el radio de los puntos
+  ) %>%
+  addLegend("bottomright",                # Añadir la leyenda para interpretar el mapa de calor
+            title = "Mapa de Calor de Accidentes",
+            colors = c("blue", "green", "yellow", "red"),
+            labels = c("Bajo", "Moderado", "Alto", "Muy Alto"))
+```
+
+
+
+
+## <span style='color: #F7931E;'>**Análisis de Congestión (CONGESTIÓN) el Día 26**</span>
+En esta sección se analiza la congestión reportada (`CONGESTIÓN`) el día 26. Se filtran los eventos de congestión para centrarse en los reportes de ese día y se estudia cómo se distribuyen en términos espaciales y temporales.
+
+El análisis de la congestión es vital para la planificación del tráfico en una ciudad, ya que permite identificar las áreas donde el tráfico es más denso y los momentos del día en que se presentan mayores problemas de movilidad. Estos datos pueden ser utilizados para optimizar la programación de semáforos o la gestión de rutas alternas.
+
+```{r}
+# Filtrar eventos de congestión del día 26
+pos <- which(Trama_Waze$tipo_evento == "CONGESTIÓN" & dia == 26)
+congestion_26 <- Trama_Waze[pos,]
+
+# Ajustar las coordenadas de latitud y longitud
+congestion_26$lat <- congestion_26$location_y / 10^(nchar(congestion_26$location_y) - 1)
+congestion_26$long <- congestion_26$location_x / 10^(nchar(congestion_26$location_x) - 3)
+
+# Filtrar eventos dentro del rango geográfico adecuado
+congestion_26 <- congestion_26[congestion_26$lat > 4 & congestion_26$lat < 5,]
+
+```
+
+
+## <span style='color: #F7931E;'>**Mapa Interactivo de Congestión**</span>
+
+En esta sección se presenta un mapa interactivo de los eventos de congestión (`CONGESTIÓN`) reportados el día 26. Utilizando `leaflet`, se visualizan los puntos de congestión en un mapa geográfico, donde los usuarios pueden interactuar con los marcadores para obtener más detalles sobre los eventos.
+
+Este mapa es útil para explorar visualmente las áreas de la ciudad más afectadas por el tráfico, proporcionando información valiosa para los planificadores urbanos y las autoridades encargadas de la gestión del tráfico.
+
+```{r}
+# Cargar las librerías necesarias
+library(leaflet)
+
+# Crear el mapa interactivo
+m26_congestion <- leaflet(congestion_26) %>%
+  addTiles() %>%
+  addCircleMarkers(lng = ~long, lat = ~lat,
+                   clusterOptions = markerClusterOptions(),
+                   label = ~hora) %>%
+  addControl(html = "<h3>Mapa de Congestión</h3>", position = "topleft")
+
+# Mostrar el mapa interactivo
+m26_congestion
+
+```
+
+
+
+## <span style='color: #F7931E;'>**Análisis Espacial de Congestión**</span>
+
+
+Esta sección está dedicada al análisis espacial de los eventos de congestión (`CONGESTIÓN`) ocurridos el día 26, utilizando herramientas como `spatstat` y `terra.` El objetivo es estudiar la distribución geográfica de estos eventos y entender si hay patrones de congestión que se repiten en ciertas áreas.
+
+Este tipo de análisis es importante para identificar las zonas más congestionadas de la ciudad, lo que puede ayudar a las autoridades a tomar decisiones sobre mejoras en la infraestructura o cambios en las rutas de tráfico para aliviar la congestión.
+
+```{r, warning=FALSE}
+# Cargar las librerías necesarias
+library(spatstat)
+
+# Definir la zona de interés
+zona <- owin(xrange = c(-74.04331, -73.9929), yrange = c(4.885736, 4.948562))
+
+# Crear un patrón de puntos espaciales a partir de los eventos CONGESTIÓN
+patron_congestion <- ppp(x = congestion_26$long, y = congestion_26$lat, window = zona)
+
+# Visualizar el patrón de puntos
+par(mfrow = c(1, 1))  # Asegurarse de que solo haya una gráfica
+
+# Graficar el test de cuadrantes
+plot(quadratcount(patron_congestion), main = "Patrón de Puntos y Test de Cuadrantes")
+
+# Superponer los puntos sobre los cuadrantes
+points(patron_congestion, col = "red")
+
+# Calcular la función K-estimación
+plot(Kest(patron_congestion))
+
+```
+
+
+
+## <span style='color: #F7931E;'>**Mapa de Densidad de Congestión**</span>
+
+Aquí se genera un mapa de densidad basado en los eventos de congestión (`CONGESTIÓN`) del día 26. Este mapa resalta las áreas con mayor densidad de tráfico, proporcionando una visualización clara de los puntos críticos de congestión en la ciudad.
+
+El mapa de densidad es una herramienta útil para los planificadores urbanos y las autoridades de tránsito, ya que permite visualizar los focos de tráfico más problemáticos y evaluar posibles soluciones para mejorar la fluidez del tránsito.
+
+
+
+
+```{r, warning=FALSE}
+# Cargar las librerías necesarias
+library(leaflet)
+library(terra)
+
+# Definir el patrón de puntos
+zona <- owin(xrange = c(-74.04331, -73.9929), yrange = c(4.885736, 4.948562))
+patron_congestion <- ppp(x = congestion_26$long, y = congestion_26$lat, window = zona)
+
+# Calcular la densidad espacial del patrón de puntos
+im1 <- density(patron_congestion)
+
+# Convertir la densidad en un raster utilizando terra
+mapa_congestion <- rast(im1)
+
+# Convertir el objeto raster a un data.frame para usarlo en leaflet
+df_congestion <- as.data.frame(mapa_congestion, xy = TRUE)
+colnames(df_congestion) <- c("long", "lat", "intensity")
+
+# Normalizar los valores de intensidad entre 0 y 1
+df_congestion$intensity <- (df_congestion$intensity - min(df_congestion$intensity)) / 
+                           (max(df_congestion$intensity) - min(df_congestion$intensity))
+
+# Crear un mapa interactivo usando leaflet
+leaflet(df_congestion) %>%
+  addProviderTiles("OpenStreetMap") %>%  # Añadir la capa base
+  addHeatmap(
+    lng = ~long, lat = ~lat,              # Coordenadas de longitud y latitud
+    intensity = ~intensity,               # Intensidad normalizada
+    blur = 35,                            # Incrementar el desenfoque para suavizar el mapa
+    max = max(df_congestion$intensity) * 2,  # Ajustar el valor máximo de intensidad
+    radius = 25                           # Aumentar el radio para que se vea más suave
+  ) %>%
+  addLegend("bottomright",                # Añadir la leyenda para interpretar el mapa de calor
+            title = "Mapa de Calor de Congestión",
+            colors = c("blue", "green", "yellow", "red"),
+            labels = c("Bajo", "Moderado", "Alto", "Muy Alto"))
+
+```
+
+
+
+
+
+
+## <span style='color: #F7931E;'>**Consolidación de Mapas de Riesgo, Accidentes, Congestión y Cierres Viales**</span>
+
+En esta última sección, se consolidan los mapas interactivos creados previamente para mostrar los eventos de peligros (`PELIGRO`), accidentes (`ACCIDENTE`), congestión (`CONGESTIÓN`) y cierres de vías (`VÍA CERRADA`) en una sola vista. Esta consolidación facilita la comparación de los diferentes tipos de eventos en una sola interfaz.
+
+La sincronización de estos mapas permite a los usuarios visualizar todos los eventos importantes en un mismo espacio geográfico, lo que es útil para obtener una visión global de los problemas de tráfico y riesgos en la ciudad, y para la planificación de soluciones integrales que aborden múltiples tipos de eventos de manera coordinada.
+
+
+
+```{r}
+# Sincronizar los mapas interactivos de distintos tipos de eventos
+leafsync::sync(m26_peligro, m26_accidente, m26_congestion, m26_via_cerrada)
+
+```
+
+
+
+
+
+## <span style='color: #F7931E;'>**Conclusión**</span>
+
+El análisis realizado sobre los datos proporcionados por Waze para el día 26 permite obtener una visión integral de los eventos que afectan la movilidad urbana, como peligros en las vías (`PELIGRO`), congestión (`CONGESTIÓN`), accidentes (`ACCIDENTE`) y cierres de vías (VÍA `CERRADA`). A través de la utilización de herramientas de análisis espacial y la visualización en mapas interactivos, se han identificado patrones importantes en la distribución espacial y temporal de estos eventos.
+
+
+### <span style='color: #FEA904;'>**Puntos Clave:**</span> 
+
+1. **Distribución de Eventos**: Se ha observado que los trancones y los peligros en las vías son los eventos más frecuentes, lo que resalta la necesidad de un enfoque coordinado en la gestión del tráfico y la implementación de medidas preventivas en áreas específicas.
+   
+2. **Zonas Críticas**: Los mapas de densidad muestran zonas de alta concentración de accidentes y cierres de vías, sugiriendo que estas áreas podrían beneficiarse de mejoras en la infraestructura vial, como la instalación de señalización adicional o la reestructuración de rutas.
+
+3. **Congestión**: El análisis de la congestión revela que ciertas áreas presentan problemas de tráfico persistentes durante horas pico, lo que destaca la importancia de implementar soluciones como la optimización de los semáforos y la creación de rutas alternativas para aliviar el tráfico.
+
+4. **Riesgos en las Vías**: La visualización de eventos `PELIGRO` permite identificar áreas con alta probabilidad de incidentes relacionados con peligros en las vías, lo que sugiere la necesidad de campañas de concientización para los conductores y posibles intervenciones en la infraestructura para mitigar riesgos.
+
+
+### <span style='color: #FEA904;'>**Recomendaciones:**</span>
+
+- **Planificación de Rutas Alternativas**: Dado el alto volumen de trancones y cierres de vías en ciertas zonas, se recomienda la creación de rutas alternativas y la mejora en la señalización para desviar el tráfico de las áreas más congestionadas.
+  
+- **Mejoras en la Infraestructura Vial**: Las zonas identificadas con mayor concentración de accidentes y peligros deben ser priorizadas para intervenciones, como el mantenimiento de vías, instalación de cámaras de vigilancia o la reubicación de pasos peatonales.
+
+- **Monitoreo Continuo**: Se recomienda un monitoreo continuo de los datos de Waze en tiempo real para detectar eventos a medida que ocurren, lo que facilitaría una respuesta más rápida y eficaz ante situaciones de emergencia o congestión.
+
+### <span style='color: #FEA904;'>**Conclusión Final**</span>
+
+
+El uso de datos crowdsourcing, como los proporcionados por Waze, representa una herramienta valiosa para las autoridades encargadas de la gestión de tráfico. La capacidad de visualizar y analizar eventos en tiempo real permite no solo una respuesta rápida a incidentes, sino también una planificación a largo plazo para mejorar la infraestructura vial y la seguridad en las vías. Este tipo de análisis debería ser integrado en los sistemas de gestión de tráfico de las ciudades para promover una movilidad más segura, eficiente y sostenible.
+
+
+
+
