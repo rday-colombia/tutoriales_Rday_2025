@@ -1,0 +1,1 @@
+Esta carpeta contiene el material, scripts, bases de datos y otros archivos para el tutorial.
